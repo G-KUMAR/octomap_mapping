@@ -976,8 +976,8 @@ void OctomapServer::handlePreNodeTraversal(const ros::Time& rostime){
     assert(paddedMaxKey[0] >= maxKey[0] && paddedMaxKey[1] >= maxKey[1]);
 
     m_multires2DScale = 1 << (m_treeDepth - m_maxTreeDepth);
-    m_gridmap.info.width = (paddedMaxKey[0] - m_paddedMinKey[0])/m_multires2DScale +1;
-    m_gridmap.info.height = (paddedMaxKey[1] - m_paddedMinKey[1])/m_multires2DScale +1;
+    m_gridmap.info.width = 20/m_octree->getNodeSize(m_maxTreeDepth);
+    m_gridmap.info.height = 20/m_octree->getNodeSize(m_maxTreeDepth);
 
     int mapOriginX = minKey[0] - m_paddedMinKey[0];
     int mapOriginY = minKey[1] - m_paddedMinKey[1];
@@ -1046,7 +1046,17 @@ void OctomapServer::handlePreNodeTraversal(const ros::Time& rostime){
 void OctomapServer::handlePostNodeTraversal(const ros::Time& rostime){
 
   if (m_publish2DMap)
+  {
+    for(int i=0; i<m_gridmap.data.size(); i++)
+    {
+      if(m_gridmap.data[i]>60 )
+      {
+        if( m_gridmap.data[i-1]<20 && m_gridmap.data[i+1]<20 && m_gridmap.data[i-m_gridmap.info.width]<20 && m_gridmap.data[i+m_gridmap.info.width]<20 )
+        m_gridmap.data[i] = 0;
+      }
+    }
     m_mapPub.publish(m_gridmap);
+  }
 }
 
 void OctomapServer::handleOccupiedNode(const OcTreeT::iterator& it){
